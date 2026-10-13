@@ -5,7 +5,7 @@
 - 云端 adb 已启动，但 `adb devices` 返回空列表，且没有 `/dev/kvm`。设备测试 APK 已构建，尚未在设备/模拟器运行。Android API 24/36 的实际 Logcat、JSON/XML 解析、系统文件行为和 Sample 操作需后续真机验证，不能将编译成功等同于设备测试通过。
 - AGP 9.3.3 默认不创建 `testReleaseUnitTest`；显式请求该任务得到 task not found。Release APK/AAR 编译验证和 JVM Debug/Release 宿主标志策略测试已覆盖对应逻辑，未声称执行 Release unit test。
 - Lint 无错误，仍有版本升级提示、Sample 字符串国际化、原有未使用颜色、测试依赖放在版本目录外等非阻塞警告。按要求不进行无关升级/重构。
-- GitHub REST 请求在 HTTPS CONNECT 阶段被云端代理以 403 拒绝，尚不能确认自动 PR 创建能力；无需重新提供 GitHub token。Git 读操作正常，提交/推送结果见交付记录。
+- GitHub REST 请求在 HTTPS CONNECT 阶段被云端代理以 403 拒绝，尚不能确认自动 PR 创建能力；无需重新提供 GitHub token。Git 读写正常：代码已提交并推送到 origin/work；gh pr create 请求 https://api.github.com/graphql 返回 Forbidden，PR 未创建。已在云环境草稿加入 api.github.com，需用户审阅保存并发布/应用后再试。可直接访问 https://github.com/liangxiaotiao/yc-logsdk/pull/new/work 创建 PR；说明见 PR_DESCRIPTION.md。
 
 ## 独立复查
 

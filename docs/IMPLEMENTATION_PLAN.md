@@ -12,4 +12,4 @@
 - [x] Task 2: First add failing `LogFormatterTest`/`CallerResolverTest`; implement `LogLevel`, internal event/formatter/caller/printer with multi-arguments, Throwable, JSON/XML and byte-safe Logcat chunks.
 - [x] Task 3: Add API/integration tests first; implement `Logger` and `LogExportResult` with Java overloads, first successful initialization, ordered async commands, safe failure handling and export callback. Run JVM tests and compile instrumentation.
 - [x] Task 4: Implement Sample `MainActivity`/`JavaUsage`, manifest/themes and README. Build Debug/Release APK/AAR and Android test APKs; run instrumentation only with a usable device.
-- [ ] Task 5: Review full branch, fix important findings with regression tests, document decisions/limitations, commit on task branch and create PR if remote access allows; never publish Maven.
+- [x] Task 5: Review full branch, fix important findings with regression tests, document decisions/limitations, commit on task branch and create PR if remote access allows; never publish Maven.

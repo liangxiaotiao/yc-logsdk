@@ -15,4 +15,4 @@ Final: minor (deferred): Sample instrumentation concurrency click does not await
 Final: minor (deferred): empty custom-header key not restored after restart; document use of nonempty keys.
 Ruling: preserve default AGP test variants — testReleaseUnitTest not defined; test Debug JVM logic plus compile Release artifacts — cost: no separate Release JVM task execution.
 Final verification: APK/AAR + test + Android test APK + lint command succeeded; SDK 28 and Sample 1 tests, 0 failures/errors/skips; lint 0 errors and 15 advisory warnings; releaseRuntimeClasspath only kotlin-stdlib 2.2.10.
-Task 5: review and verification complete; committing current branch, then attempting remote push/PR within available permissions.
+Task 5: complete — implementation commit beb49f6 pushed to origin/work. gh pr create failed at GitHub GraphQL with Forbidden (network CONNECT also confirmed 403); PR was not created. Draft saves updated startup guidance and api.github.com custom allowance, not yet applied/published. PR description preserved in docs/PR_DESCRIPTION.md; user can create PR using GitHub pull/new/work URL.
