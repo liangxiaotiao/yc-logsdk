@@ -1,112 +1,148 @@
-# Yc-Log-Sdk V1.0
+<div align="center">
 
-轻量 Android 日志库：Kotlin 实现、Java 静态调用、单进程全局 Logger，支持 Logcat、按天文件、完整记录裁剪、自定义文件头和 ZIP 导出。
+# YC Log SDK
 
-## 集成
+轻量 Android 日志库 · Kotlin & Java · Logcat / 文件 / ZIP 导出
 
-开发仓库内使用 `implementation project(':Yc-Log-Sdk')`。最低 Android API 24；当前工程使用 AGP 8.6.0、Gradle 8.7、Kotlin 2.1.0、JDK 17、compileSdk 35；Java/Kotlin 字节码目标均为 11，AAR 的 minCompileSdk 为 35。SDK 没有 AndroidX、Timber、UtilCode、Gson 或其他功能性运行时依赖，仅需 Kotlin 标准库。保留 Maven Central 发布配置，兼容版本坐标为 `io.github.liangxiaotiao:yc-log-sdk:1.0.1`；已发布的 `1.0.0` 不覆盖。
+[![Maven Central](https://img.shields.io/badge/Maven_Central-1.0.1-2563eb)](https://central.sonatype.com/artifact/io.github.liangxiaotiao/yc-log-sdk/1.0.1)
+[![Android](https://img.shields.io/badge/Android-API_24%2B-16a34a)](#1-添加依赖)
+[![License](https://img.shields.io/badge/License-Apache_2.0-64748b)](LICENSE)
 
-App 在 Application 中先初始化，然后蓝牙 SDK 调用默认 init 即可复用同一配置和文件：
+**[添加依赖](#1-添加依赖) · [初始化](#2-初始化) · [打印日志](#3-打印日志) · [导出日志](#4-导出日志)**
 
-```kotlin
-Logger.init(
-    context = application,
-    name = "HealthWear",
-    dirName = "logs",
-    saveDays = 7,
-    maxFileSize = LogFileSize.MB_20,
-    stackDeep = 1
-)
-// 蓝牙 SDK 内部：不覆盖 App 配置。
-Logger.init(context)
-Logger.addFileHeader("Bluetooth SDK" to "1.3.5", "Protocol Version" to "2.0")
-```
+</div>
 
-默认：`sdk` / `logs` / 最近 7 个自然日（含今天）/ 20 MiB / 一个调用帧。大小枚举只有 MB_5、MB_10、MB_15、MB_20。`name` 和 `dirName` 为 1–80 个字母、数字、下划线或连字符，支持中文，不接受路径或 `.`/`..`。`saveDays` 和 `stackDeep` 必须为正整数。
+---
 
-配置只由第一次成功初始化决定。磁盘准备在文件线程执行，期间后续调用排队；磁盘准备失败可再次 init。初始化前日志/头更新/开关设置直接忽略，不缓存。文件操作不在调用线程执行，仅支持单进程。
+## 1. 添加依赖
 
-## 打印 API
+接入要求：**minSdk ≥ 24、compileSdk ≥ 35**。已验证宿主构建环境：AGP 8.6.0、Kotlin 2.1.0；SDK 字节码目标为 Java 11。
+
+在 `settings.gradle.kts` 的仓库配置中添加 Maven Central：
 
 ```kotlin
-Logger.d("用户点击连接")
-Logger.iTag("Bluetooth", "开始连接设备")
-Logger.d("连接信息", deviceName, deviceAddress, status) // args[0]、args[1]…
-Logger.e(IllegalStateException("连接失败", cause))        // 完整 cause/suppressed 堆栈
-Logger.json("JSON", """{"device":"Band","status":1}""")
-Logger.xml("XML", "<device><status>1</status></device>")
-Logger.level = LogLevel.DEBUG                          // 同时过滤 Logcat 和文件
-Logger.logcatEnabled = false                          // 不影响文件
-Logger.addFileHeader(mapOf("Bluetooth SDK" to "1.3.6"))
-Logger.clearLogs()                                    // 异步清理今天之前的托管文件
-```
-
-等级：`v/d/i/w/e/a/wtf`；对应手动 TAG 方法为 `vTag/dTag/iTag/wTag/eTag/aTag/wtfTag`。ASSERT/WTF 使用 ASSERT 优先级的 Logcat println，不触发可能终止宿主的系统 wtf handler。JSON/XML 默认 DEBUG，有单字符串、`(tag, value)` 和 `jsonTag/xmlTag` 三种调用形式；非法内容回退原文。普通对象只使用 `toString()`，不自动 JSON 序列化。
-
-Logcat 显示边框、线程及可点击调用位置，超长内容按 UTF-8 字节分段。`stackDeep` 是展示的外部调用帧数量，第一帧用于自动 TAG 和文件定位。默认 VERBOSE；Debug 宿主默认开启 Logcat，Release 宿主默认关闭，均写文件。环境依据宿主 `ApplicationInfo.FLAG_DEBUGGABLE` 判断。
-
-## 文件和导出
-
-文件固定为 `context.filesDir/dirName/name_yyyy-MM-dd.log`。时间、线程、TAG、调用帧在 Logger 调用时捕获，异步写入不重新计时。文件行包含毫秒时间、等级、线程、TAG、文件行号、类/方法及完整正文；后续行带缩进。
-
-文件为 UTF-8 文本。头包含日期、厂商、型号、Android 版本/API、包名、App 版本名/版本码和自定义信息。自定义头按添加顺序，重复键更新原位置；当前文件用同目录临时文件、fsync 和原子 rename 更新，跨天继承。自定义头值中的换行/冒号/反斜杠被转义。请使用非空头键。
-
-记录以 `@record <8位十六进制正文UTF-8字节数>` 标记，随后为正文和换行；读取/裁剪不依赖正文的时间戳或标记外观。大小上限包含头及标记。超限时移除最旧至少约 25% 的完整记录字节，必要时继续移除；超大单条记录保留字符完整的前缀并添加 `[TRUNCATED]`。头始终保留，过大的新头会安全拒绝而保留旧文件。
-
-保留天数在初始化及跨天创建文件时自动清理。仅处理名称/日期/文件签名匹配的本 Logger 文件，不触碰其他文件，不跟随符号链接。重启继续追加当天文件，不重复写头；中断写入造成的不完整尾记录会在重新打开时移除，保留之前完整记录。
-
-```kotlin
-Logger.export(context) { result ->
-    if (result.isSuccess) {
-        val zip = result.file!!
-        // 回调在文件线程；需要更新界面时自行 runOnUiThread。
-    } else {
-        val error = result.error
+dependencyResolutionManagement {
+    repositories {
+        google()
+        mavenCentral()
     }
 }
 ```
 
-ZIP 保存到 cacheDir，名称如 `HealthWear_logs_20261013_<唯一后缀>.zip`。单线程队列保证导出前已提交的日志完成写入；导出中不会插入头更新、裁剪或清理。不会上传、分享或按日期筛选。前序文件命令失败会返回失败，避免将缺失日志宣称为完整成功；之后的写入仍继续尝试。导出前未初始化也返回失败，回调抛异常不会终止日志线程。
+在 App 模块的 `build.gradle.kts` 中添加：
 
-## Java
+```kotlin
+dependencies {
+    implementation("io.github.liangxiaotiao:yc-log-sdk:1.0.1")
+}
+```
+
+<details>
+<summary>使用 Groovy / build.gradle</summary>
+
+```groovy
+// settings.gradle 的 dependencyResolutionManagement.repositories 中
+mavenCentral()
+
+// app/build.gradle 的 dependencies 中
+implementation 'io.github.liangxiaotiao:yc-log-sdk:1.0.1'
+```
+
+</details>
+
+## 2. 初始化
+
+在 `Application.onCreate()` 中初始化，并在 Manifest 注册该 Application：
+
+```kotlin
+import android.app.Application
+import com.yc.yclogsdk.Logger
+
+class MyApplication : Application() {
+    override fun onCreate() {
+        super.onCreate()
+        Logger.init(this, name = "MyApp")
+    }
+}
+```
+
+```xml
+<!-- 在现有 application 节点添加 android:name，保留其他属性和组件。 -->
+<application android:name=".MyApplication">
+    <!-- 原有 Activity、Service 等组件声明 -->
+</application>
+```
+
+默认保留最近 **7 天**日志，单文件上限 **20 MiB**，目录为 `filesDir/logs`。无需存储权限；支持单进程。先初始化再调用日志 API，后续重复初始化不会覆盖首次生效的配置。
+
+Java 项目同样在 `Application.onCreate()` 中调用：
 
 ```java
-Logger.init(context);
-Logger.dTag("Bluetooth", "连接成功", 42);
-Logger.setLevel(LogLevel.DEBUG);
-Logger.setLogcatEnabled(false);
-Map<String, String> headers = new LinkedHashMap<>();
-headers.put("Bluetooth SDK", "1.3.5");
-Logger.addFileHeader(headers);
-Logger.export(context, result -> {
+com.yc.yclogsdk.Logger.init(this, "MyApp");
+```
+
+
+## 3. 打印日志
+
+```kotlin
+Logger.d("连接成功")
+Logger.iTag("Bluetooth", "开始连接设备")
+Logger.d("设备信息", "Band", 85)
+Logger.e(IllegalStateException("连接失败"))
+Logger.json("""{"device":"Band","connected":true}""")
+Logger.xml("<device><name>Band</name></device>")
+Logger.addFileHeader(mapOf("App Version" to "1.0.0"))
+```
+
+Debug 宿主默认同时输出 Logcat 和文件；Release 宿主默认只写文件。日志支持 `v / d / i / w / e / a / wtf`。
+
+<details>
+<summary>Java 调用</summary>
+
+```java
+import com.yc.yclogsdk.Logger;
+import java.util.Collections;
+
+Logger.d("连接成功");
+Logger.iTag("Bluetooth", "开始连接设备");
+Logger.addFileHeader(Collections.singletonMap("App Version", "1.0.0"));
+```
+
+</details>
+
+## 4. 导出日志
+
+```kotlin
+Logger.export(applicationContext) { result ->
+    if (result.isSuccess) {
+        val zipFile = result.file!!
+        // 将 ZIP 交给自己的保存或分享流程。
+    } else {
+        val error = result.error
+        // 处理导出失败。
+    }
+}
+```
+
+ZIP 生成在 `cacheDir`；回调在后台文件线程执行，更新 UI 时切回主线程。SDK 不会自动上传或分享日志。
+
+<details>
+<summary>Java 导出</summary>
+
+```java
+Logger.export(getApplicationContext(), result -> {
     if (result.isSuccess()) {
-        File zip = result.getFile();
+        java.io.File zipFile = result.getFile();
+        // 保存或分享 ZIP。
     } else {
         Throwable error = result.getError();
+        // 处理导出失败。
     }
 });
 ```
 
-完整可编译示例见 `app/src/main/java/com/yc/logcatdemo/JavaUsage.java`。Sample 在 DemoApplication 中先初始化 HealthWear，再模拟 Bluetooth SDK 默认初始化和版本注册。MainActivity 的按钮覆盖所有主要调用、等级切换、头更新、清理、导出、长文本和多线程打印。
+</details>
 
-## 构建与验证
+---
 
-构建需 JDK 17、Android SDK 35 和 build-tools 34.0.0（AGP 8.6.0 默认版本）。请将 `JAVA_HOME` 和 Android Studio 的 Gradle JDK 设置为 JDK 17，并在本地 `local.properties` 中配置 SDK 路径。Kotlin 编译工具链要求 JDK 17，Java/Kotlin 产物仍使用 JVM 11 目标。
-
-Vanniktech maven-publish 使用 0.34.0：该版本最低支持 Gradle 8.5、AGP 8.0.0、Kotlin 1.9.20；0.37.0 最低要求 Gradle 9.0.0、AGP 8.13.0、Kotlin 2.2.0，不适用于本工程。Maven Central 坐标、POM、Central Portal 配置与 GPG 签名保持不变。
-
-```bash
-bash ./gradlew :app:assembleDebug :app:assembleRelease :Yc-Log-Sdk:assembleDebug :Yc-Log-Sdk:assembleRelease test :app:assembleDebugAndroidTest :Yc-Log-Sdk:assembleDebugAndroidTest lint --max-workers=4 --console=plain
-```
-
-JVM 测试验证文件边界、四档真实容量、自然日/DST、清理、重启、头更新、JSON/XML、异常、多线程完整性、首次初始化、开关/等级和 Java API。AGP 8.6.0 提供 Debug/Release unit test 任务；Debug/Release 输出策略在 JVM 层分别验证宿主标志。
-
-仅发布到本地 Maven 仓库（不会上传 Maven Central）：
-
-```bash
-bash ./gradlew :Yc-Log-Sdk:publishToMavenLocal --max-workers=4 --console=plain
-```
-
-发布配置启用了 GPG 签名，需可用的本地签名密钥。若仅验证未签名本地产物，可使用 `-x :Yc-Log-Sdk:signMavenPublication`，但这不验证签名。实际发布新版本时使用 `1.0.1`，不要重新发布 `1.0.0`。
-
-连接测试设备后运行 `bash ./gradlew :app:connectedDebugAndroidTest :Yc-Log-Sdk:connectedDebugAndroidTest`。当前云端设备运行情况和具体限制见 [KNOWN_ISSUES](docs/KNOWN_ISSUES.md)，自主决策见 [DECISIONS](docs/DECISIONS.md)。
+[完整接入示例](app/src/main/java/com/yc/logcatdemo) · [维护者发布指南](docs/MAVEN_PUBLISH.md)
