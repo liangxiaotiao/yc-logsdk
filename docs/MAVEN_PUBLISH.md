@@ -138,7 +138,7 @@ bash ./gradlew :Yc-Log-Sdk:publishAndReleaseToMavenCentral \
   --no-configuration-cache --max-workers=4 --console=plain
 ```
 
-该任务将上传、等待校验，并触发正式发布，**会让版本公开且无法覆盖**。本次已由用户明确授权。不要重复执行来判断是否成功；应查看日志及 Central Portal 的 deployment 状态。若校验失败，在 Portal 查看具体原因后修正，确认已有 deployment 的状态再重试。
+该任务上传产物并请求自动发布；Central 会异步校验，通过后正式发布，**会让版本公开且无法覆盖**。0.34.0 的 Gradle 任务不等待远程校验和仓库同步完成；`BUILD SUCCESSFUL` 后仍需执行步骤 9 确认结果。本次已由用户明确授权。不要重复执行来判断是否成功；应查看日志及 Central Portal 的 deployment 状态。若校验失败，在 Portal 查看具体原因后修正，确认已有 deployment 的状态再重试。
 
 若只想上传后在 Portal 手动确认，则改为执行下面的任务，并在校验通过后点击 **Publish**：
 
