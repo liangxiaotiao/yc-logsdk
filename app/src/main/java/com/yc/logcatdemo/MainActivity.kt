@@ -27,11 +27,19 @@ class MainActivity : Activity() {
         status = TextView(this).apply { textSize = 16f }
         result = TextView(this).apply { textSize = 14f; setTextIsSelectable(true) }
         content.addView(status)
-        content.addView(TextView(this).apply { text = "文件: App filesDir/logs/HealthWear_日期.log\n文件始终开启；ZIP 在 cacheDir。" })
+        content.addView(TextView(this).apply {
+            text = "文件: App filesDir/logs/HealthWear_日期.log\n文件始终开启；ZIP 在 cacheDir。"
+        })
         fun button(label: String, action: () -> Unit) {
-            content.addView(Button(this).apply {
-                text = label; setOnClickListener { action(); refreshStatus() }
-            }, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT))
+            content.addView(
+                Button(this).apply {
+                    text = label; setOnClickListener { action(); refreshStatus() }
+                },
+                LinearLayout.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT,
+                    ViewGroup.LayoutParams.WRAP_CONTENT
+                )
+            )
         }
         button("初始化 / 重复初始化") {
             Logger.init(application, name = "ThisMustNotOverride")
@@ -47,7 +55,14 @@ class MainActivity : Activity() {
             Logger.dTag("Bluetooth", "连接成功"); Logger.iTag("Bluetooth", "设备认证完成")
             Logger.eTag("Bluetooth", "连接失败"); note("已提交 Bluetooth TAG 日志")
         }
-        button("多参数") { Logger.d("连接信息", "DemoDevice", "AA:BB:CC:DD:EE:FF", true); note("已提交 args[0..3]") }
+        button("多参数") {
+            Logger.d(
+                "连接信息",
+                "DemoDevice",
+                "AA:BB:CC:DD:EE:FF",
+                true
+            ); note("已提交 args[0..3]")
+        }
         button("JSON / XML") {
             Logger.json("JSON", "{\"device\":\"DemoDevice\",\"status\":1}")
             Logger.xml("XML", "<device><name>DemoDevice</name><status>1</status></device>")
@@ -63,10 +78,16 @@ class MainActivity : Activity() {
             Logger.d("DEBUG：在 WARN 级别被过滤"); Logger.w("WARN：保留")
             note("等级同时过滤文件和 Logcat")
         }
-        button("切换 Logcat") { Logger.logcatEnabled = !Logger.logcatEnabled; Logger.i("Logcat 切换，文件继续记录"); note("已切换 Logcat") }
+        button("切换 Logcat") {
+            Logger.logcatEnabled =
+                !Logger.logcatEnabled; Logger.i("Logcat 切换，文件继续记录"); note("已切换 Logcat")
+        }
         button("自定义文件头") {
             headerRevision++
-            Logger.addFileHeader("Demo Revision" to headerRevision, "User Note" to "中文 / 多行\n安全转义")
+            Logger.addFileHeader(
+                "Demo Revision" to headerRevision,
+                "User Note" to "中文 / 多行\n安全转义"
+            )
             Logger.addFileHeader(mapOf("Demo Revision" to headerRevision))
             note("已排队更新当天头，Revision=$headerRevision")
         }
@@ -81,9 +102,17 @@ class MainActivity : Activity() {
         }
         button("多线程并发") {
             Thread({
-                val threads = (1..4).map { id -> Thread({
-                    repeat(50) { index -> Logger.iTag("Concurrent", "线程$id", "record=$index") }
-                }, "Demo-$id").apply { start() } }
+                val threads = (1..4).map { id ->
+                    Thread({
+                        repeat(50) { index ->
+                            Logger.iTag(
+                                "Concurrent",
+                                "线程$id",
+                                "record=$index"
+                            )
+                        }
+                    }, "Demo-$id").apply { start() }
+                }
                 threads.forEach { it.join() }
                 runOnUiThread { note("4 个线程已提交 200 条日志；点击导出等待写入完成") }
             }, "Demo-Coordinator").start()
@@ -99,8 +128,13 @@ class MainActivity : Activity() {
         setContentView(ScrollView(this).apply { addView(content) })
         refreshStatus(); note("Application 已初始化，蓝牙 SDK 复用同一 Logger")
     }
+
     private fun refreshStatus() {
-        status.text = "级别: ${Logger.level}    Logcat: ${if (Logger.logcatEnabled) "开启" else "关闭"}"
+        status.text =
+            "级别: ${Logger.level}    Logcat: ${if (Logger.logcatEnabled) "开启" else "关闭"}"
     }
-    private fun note(message: String) { result.text = message }
+
+    private fun note(message: String) {
+        result.text = message
+    }
 }
