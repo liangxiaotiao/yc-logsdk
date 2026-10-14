@@ -14,3 +14,6 @@
 .cxx
 local.properties
 .idea
+
+# Kotlin Gradle plugin local cache
+.kotlin/

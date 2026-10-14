@@ -1,6 +1,7 @@
 plugins {
     alias(libs.plugins.android.library)
-    id 'com.vanniktech.maven.publish' version '0.37.0'
+    alias(libs.plugins.kotlin.android)
+    alias(libs.plugins.maven.publish)
 }
 
 // Kotlin 标准库的 JetBrains annotations 只有编译元数据用途，无需作为 SDK 运行时依赖。
@@ -10,14 +11,15 @@ configurations.matching { it.name.endsWith('RuntimeClasspath') }.configureEach {
 
 android {
     namespace 'com.yc.yclogsdk'
-    compileSdk {
-        version = release(36) {
-            minorApiLevel = 1
-        }
-    }
+    compileSdk 35
 
     defaultConfig {
         minSdk 24
+
+        // 日志库不依赖 API 36，允许 compileSdk 35 的宿主接入。
+        aarMetadata {
+            minCompileSdk = 35
+        }
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -26,6 +28,14 @@ android {
         targetCompatibility JavaVersion.VERSION_11
     }
 
+}
+
+// 构建使用 JDK 17，产物继续保持 Java 11 字节码，与原有宿主兼容。
+kotlin {
+    jvmToolchain(17)
+    compilerOptions {
+        jvmTarget = org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_11
+    }
 }
 
 dependencies {
@@ -45,7 +55,7 @@ mavenPublishing {
     coordinates(
             'io.github.liangxiaotiao',
             'yc-log-sdk',
-            '1.0.0'
+            '1.0.1'
     )
 
     // 发布到 Maven Central
