@@ -4,7 +4,7 @@
 
 ## 集成
 
-开发仓库内使用 `implementation project(':Yc-Log-Sdk')`。最低 Android API 24；当前工程保持 AGP 9.3.3、Gradle 9.5.0、Java 21、compileSdk 36.1。SDK 没有 AndroidX、Timber、UtilCode、Gson 或其他功能性运行时依赖，仅需 Kotlin 标准库。没有 Maven 发布配置。
+开发仓库内使用 `implementation project(':Yc-Log-Sdk')`。最低 Android API 24；当前工程使用 AGP 8.6.0、Gradle 8.7、Kotlin 2.1.0、JDK 17、compileSdk 35；Java/Kotlin 字节码目标均为 11，AAR 的 minCompileSdk 为 35。SDK 没有 AndroidX、Timber、UtilCode、Gson 或其他功能性运行时依赖，仅需 Kotlin 标准库。保留 Maven Central 发布配置，兼容版本坐标为 `io.github.liangxiaotiao:yc-log-sdk:1.0.1`；已发布的 `1.0.0` 不覆盖。
 
 App 在 Application 中先初始化，然后蓝牙 SDK 调用默认 init 即可复用同一配置和文件：
 
@@ -91,12 +91,22 @@ Logger.export(context, result -> {
 
 ## 构建与验证
 
-当前云环境每个新 shell 先执行 `source /workspace/cloud-setup/activate.sh`，再进入 `/workspace/yc-logsdk`；本地需 JDK 21 和 Android SDK 36.1/build-tools 36.0.0。
+构建需 JDK 17、Android SDK 35 和 build-tools 34.0.0（AGP 8.6.0 默认版本）。请将 `JAVA_HOME` 和 Android Studio 的 Gradle JDK 设置为 JDK 17，并在本地 `local.properties` 中配置 SDK 路径。Kotlin 编译工具链要求 JDK 17，Java/Kotlin 产物仍使用 JVM 11 目标。
+
+Vanniktech maven-publish 使用 0.34.0：该版本最低支持 Gradle 8.5、AGP 8.0.0、Kotlin 1.9.20；0.37.0 最低要求 Gradle 9.0.0、AGP 8.13.0、Kotlin 2.2.0，不适用于本工程。Maven Central 坐标、POM、Central Portal 配置与 GPG 签名保持不变。
 
 ```bash
-./gradlew :app:assembleDebug :app:assembleRelease :Yc-Log-Sdk:assembleDebug :Yc-Log-Sdk:assembleRelease test :app:assembleDebugAndroidTest :Yc-Log-Sdk:assembleDebugAndroidTest lint --max-workers=4 --console=plain
+bash ./gradlew :app:assembleDebug :app:assembleRelease :Yc-Log-Sdk:assembleDebug :Yc-Log-Sdk:assembleRelease test :app:assembleDebugAndroidTest :Yc-Log-Sdk:assembleDebugAndroidTest lint --max-workers=4 --console=plain
 ```
 
-JVM 测试验证文件边界、四档真实容量、自然日/DST、清理、重启、头更新、JSON/XML、异常、多线程完整性、首次初始化、开关/等级和 Java API。AGP 9.3.3 默认仅创建 Debug unit test 任务，Release APK/AAR 单独编译；Debug/Release 输出策略在 JVM 层分别验证宿主标志。
+JVM 测试验证文件边界、四档真实容量、自然日/DST、清理、重启、头更新、JSON/XML、异常、多线程完整性、首次初始化、开关/等级和 Java API。AGP 8.6.0 提供 Debug/Release unit test 任务；Debug/Release 输出策略在 JVM 层分别验证宿主标志。
 
-连接设备后运行 `./gradlew :app:connectedDebugAndroidTest :Yc-Log-Sdk:connectedDebugAndroidTest`。当前云端设备运行情况和具体限制见 [KNOWN_ISSUES](docs/KNOWN_ISSUES.md)，自主决策见 [DECISIONS](docs/DECISIONS.md)。
+仅发布到本地 Maven 仓库（不会上传 Maven Central）：
+
+```bash
+bash ./gradlew :Yc-Log-Sdk:publishToMavenLocal --max-workers=4 --console=plain
+```
+
+发布配置启用了 GPG 签名，需可用的本地签名密钥。若仅验证未签名本地产物，可使用 `-x :Yc-Log-Sdk:signMavenPublication`，但这不验证签名。实际发布新版本时使用 `1.0.1`，不要重新发布 `1.0.0`。
+
+连接测试设备后运行 `bash ./gradlew :app:connectedDebugAndroidTest :Yc-Log-Sdk:connectedDebugAndroidTest`。当前云端设备运行情况和具体限制见 [KNOWN_ISSUES](docs/KNOWN_ISSUES.md)，自主决策见 [DECISIONS](docs/DECISIONS.md)。

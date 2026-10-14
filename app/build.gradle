@@ -1,14 +1,11 @@
 plugins {
     alias(libs.plugins.android.application)
+    alias(libs.plugins.kotlin.android)
 }
 
 android {
     namespace 'com.yc.logcatdemo'
-    compileSdk {
-        version = release(36) {
-            minorApiLevel = 1
-        }
-    }
+    compileSdk 35
 
     defaultConfig {
         applicationId "com.yc.logcatdemo"
@@ -22,14 +19,20 @@ android {
 
     buildTypes {
         release {
-            optimization {
-                enable false
-            }
+            minifyEnabled false
         }
     }
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_11
         targetCompatibility JavaVersion.VERSION_11
+    }
+}
+
+// 构建使用 JDK 17，产物继续保持 Java 11 字节码，与原有宿主兼容。
+kotlin {
+    jvmToolchain(17)
+    compilerOptions {
+        jvmTarget = org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_11
     }
 }
 
