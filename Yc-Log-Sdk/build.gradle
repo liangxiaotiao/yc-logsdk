@@ -2,6 +2,11 @@ plugins {
     alias(libs.plugins.android.library)
 }
 
+// Kotlin 标准库的 JetBrains annotations 只有编译元数据用途，无需作为 SDK 运行时依赖。
+configurations.matching { it.name.endsWith('RuntimeClasspath') }.configureEach {
+    exclude group: 'org.jetbrains', module: 'annotations'
+}
+
 android {
     namespace 'com.yc.yclogsdk'
     compileSdk {
@@ -23,16 +28,10 @@ android {
 }
 
 dependencies {
-    implementation libs.androidx.appcompat
-    implementation libs.androidx.core.ktx
-    implementation libs.material
     testImplementation libs.junit
+    testImplementation 'org.json:json:20250517'
     androidTestImplementation libs.androidx.espresso.core
     androidTestImplementation libs.androidx.junit
 
-
-    implementation 'com.jakewharton.timber:timber:5.0.1'
-
-    implementation 'com.blankj:utilcodex:1.31.1'
 
 }
