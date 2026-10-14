@@ -1,5 +1,6 @@
 plugins {
     alias(libs.plugins.android.library)
+    id 'com.vanniktech.maven.publish' version '0.37.0'
 }
 
 // Kotlin 标准库的 JetBrains annotations 只有编译元数据用途，无需作为 SDK 运行时依赖。
@@ -34,4 +35,58 @@ dependencies {
     androidTestImplementation libs.androidx.junit
 
 
+}
+
+
+// Maven Central 发布配置
+mavenPublishing {
+
+    // Maven 坐标
+    coordinates(
+            'io.github.liangxiaotiao',
+            'yc-log-sdk',
+            '1.0.0'
+    )
+
+    // 发布到 Maven Central
+    publishToMavenCentral()
+
+    // 对发布产物进行 GPG 签名
+    signAllPublications()
+
+    // Maven POM 信息
+    pom {
+        name = 'YC Log SDK'
+
+        description = 'A lightweight Android logging library.'
+
+        url = 'https://github.com/liangxiaotiao/yc-logsdk'
+
+        licenses {
+            license {
+                name = 'The Apache License, Version 2.0'
+                url = 'https://www.apache.org/licenses/LICENSE-2.0.txt'
+                distribution = 'repo'
+            }
+        }
+
+        developers {
+            developer {
+                id = 'liangxiaotiao'
+                name = 'liangxiaotiao'
+                email = 'liangxiaotiao@gmail.com'
+            }
+        }
+
+        scm {
+            url = 'https://github.com/liangxiaotiao/yc-logsdk'
+            connection = 'scm:git:https://github.com/liangxiaotiao/yc-logsdk.git'
+            developerConnection = 'scm:git:ssh://git@github.com/liangxiaotiao/yc-logsdk.git'
+        }
+    }
+}
+
+// 使用 Mac 本地 GPG 密钥进行签名
+signing {
+    useGpgCmd()
 }
