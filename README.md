@@ -4,7 +4,7 @@
 
 轻量 Android 日志库 · Kotlin & Java · Logcat / 文件 / ZIP 导出
 
-[![Maven Central](https://img.shields.io/badge/Maven_Central-1.0.1-2563eb)](https://central.sonatype.com/artifact/io.github.liangxiaotiao/yc-log-sdk/1.0.1)
+[![Maven Central](https://img.shields.io/badge/Maven_Central-1.0.3-2563eb)](https://central.sonatype.com/artifact/io.github.liangxiaotiao/yc-log-sdk/1.0.3)
 [![Android](https://img.shields.io/badge/Android-API_24%2B-16a34a)](#1-添加依赖)
 [![License](https://img.shields.io/badge/License-Apache_2.0-64748b)](LICENSE)
 
@@ -33,7 +33,7 @@ dependencyResolutionManagement {
 
 ```kotlin
 dependencies {
-    implementation("io.github.liangxiaotiao:yc-log-sdk:1.0.1")
+    implementation("io.github.liangxiaotiao:yc-log-sdk:1.0.3")
 }
 ```
 
@@ -45,7 +45,7 @@ dependencies {
 mavenCentral()
 
 // app/build.gradle 的 dependencies 中
-implementation 'io.github.liangxiaotiao:yc-log-sdk:1.0.1'
+implementation 'io.github.liangxiaotiao:yc-log-sdk:1.0.3'
 ```
 
 </details>
@@ -125,6 +125,14 @@ Logger.export(applicationContext) { result ->
 ```
 
 ZIP 生成在 `cacheDir`；回调在后台文件线程执行，更新 UI 时切回主线程。SDK 不会自动上传或分享日志。
+
+需要直接阅读时可用 `Logger.export(context, callback, true)`：ZIP 内日志去掉每条记录的 `@record` 头；两参数版本保持原始格式。
+
+若通过自己的封装类（如 `MLog`）调用 Logger，初始化时登记封装类全名，位置与默认 TAG 会指向真正的业务调用处：
+
+```kotlin
+Logger.addCallerSkip("com.example.app.MLog")
+```
 
 <details>
 <summary>Java 导出</summary>

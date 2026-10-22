@@ -55,7 +55,7 @@ mavenPublishing {
     coordinates(
             'io.github.liangxiaotiao',
             'yc-log-sdk',
-            '1.0.1'
+            '1.0.3'
     )
 
     // 发布到 Maven Central

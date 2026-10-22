@@ -17,7 +17,9 @@ internal object LogFormatter {
     fun message(args: Array<out Any?>): String = when (args.size) {
         0 -> "(empty)"
         1 -> render(args[0])
-        else -> args.mapIndexed { i, value -> "args[$i] = ${render(value)}" }.joinToString("\n")
+        // 多参数空格分列；异常堆栈统一跟在该条消息之后，便于阅读。
+        else -> (args.filterNot { it is Throwable }.map(::render).joinToString(" ") +
+            args.filterIsInstance<Throwable>().joinToString("") { "\n" + render(it).trimEnd() }).trimStart('\n')
     }
 
     private fun render(value: Any?): String = try {
@@ -70,25 +72,20 @@ internal object LogFormatter {
         } catch (_: Exception) { value }
     }
 
-    fun file(event: LogEvent): String {
-        val caller = event.callers.first()
-        return "${event.timestamp} [${event.level.letter}] [${singleLine(event.thread)}] " +
-            "[${singleLine(event.tag)}] [${singleLine(caller.location)}] " +
-            "${singleLine(caller.className)}.${singleLine(caller.methodName)}: " +
-            event.message.replace("\r\n", "\n").replace("\r", "\n").replace("\n", "\n    | ")
-    }
+    /** 一条一行：`MM-dd HH:mm:ss.SSS L/线程 TAG(File.kt:行) 消息`，续行（多行消息、stackDeep>1 的调用帧）以 `    | ` 开头。 */
+    fun file(event: LogEvent): String =
+        "${event.timestamp} ${event.level.letter}/${singleLine(event.thread)} " +
+            "${singleLine(event.tag)}(${singleLine(event.callers.first().location)}) " +
+            body(event).replace("\n", "\n    | ")
 
-    fun logcat(event: LogEvent): List<String> = buildList {
-        add("┌────────────────────────────────────────────────")
-        event.callers.forEach { caller ->
-            chunks("[${singleLine(event.thread)}] ${singleLine(caller.className)}.${singleLine(caller.methodName)} (${singleLine(caller.location)})")
-                .forEach { add("│ $it") }
-        }
-        event.message.replace("\r\n", "\n").replace("\r", "\n").split('\n').forEach { line ->
-            chunks(line).forEach { add("│ $it") }
-        }
-        add("└────────────────────────────────────────────────")
-    }
+    /** TAG 由 logcat 自带，正文只放 `[线程] (File.kt:行) 消息`；仅超长时按 3000 字节拆成多条。 */
+    fun logcat(event: LogEvent): List<String> =
+        chunks("[${singleLine(event.thread)}] (${singleLine(event.callers.first().location)}) ${body(event)}")
+
+    private fun body(event: LogEvent): String =
+        (listOf(event.message.replace("\r\n", "\n").replace("\r", "\n")) +
+            event.callers.drop(1).map { "at ${singleLine(it.simpleName)}.${singleLine(it.simpleMethod)}(${singleLine(it.location)})" })
+            .joinToString("\n")
 
     private fun singleLine(value: String) = value.replace("\n", "\\n").replace("\r", "\\r")
 

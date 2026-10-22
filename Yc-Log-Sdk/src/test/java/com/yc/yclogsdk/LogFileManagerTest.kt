@@ -149,6 +149,47 @@ class LogFileManagerTest {
         }
     }
 
+    @Test fun legacyFormatFileStaysReadableAppendableAndExportable() {
+        val root = temp.newFolder(); val cache = temp.newFolder()
+        // 1.0.1 写出的原始字节：容器格式未变，只有正文样式不同。
+        val legacyBody = "2026-10-13 15:36:22.736 [D] [main] [AdHolder] [AdHolder.kt:153] com.y.AdHolder\$a\$1.b: args[0] = x\n    | args[1] = 开屏关闭"
+        val bytes = legacyBody.toByteArray()
+        File(root, "logs").mkdirs()
+        today(root).writeBytes("# Yc-Log-Sdk V1\nLog Date: $day\n# End header\n".toByteArray() +
+            "@record %08x\n".format(bytes.size).toByteArray() + bytes + "\n".toByteArray())
+        val m = manager(root)
+        m.append(day, "10-13 15:37:00.000 D/main AdHolder(AdHolder.kt:160) new")
+        val text = today(root).readText()
+        assertTrue(text.contains(legacyBody)); assertTrue(text.endsWith("AdHolder(AdHolder.kt:160) new\n"))
+        ZipFile(m.export(cache)).use { z ->
+            val raw = z.getInputStream(z.getEntry(today(root).name)).reader().readText()
+            assertEquals(2, Regex("@record [0-9a-f]{8}\n").findAll(raw).count())
+        }
+        ZipFile(m.export(cache, plain = true)).use { z ->
+            val plain = z.getInputStream(z.getEntry(today(root).name)).reader().readText()
+            assertFalse(plain.contains("@record"))
+            assertTrue(plain.contains("# End header\n$legacyBody\n10-13 15:37:00.000 D/main AdHolder(AdHolder.kt:160) new\n"))
+        }
+    }
+
+    @Test fun plainZipHasAllManagedFilesWithoutRecordMarkers() {
+        val root = temp.newFolder(); val cache = temp.newFolder(); val m = manager(root)
+        m.append(day.minusDays(1), "yesterday\n    | second line"); m.append(day, "@record 00000001 in body")
+        File(root, "logs/foreign.txt").writeText("not exported")
+        val zip = m.export(cache, plain = true)
+        assertTrue(zip.name.endsWith(".zip"))
+        ZipFile(zip).use { z ->
+            assertEquals(listOf("HealthWear_${day.minusDays(1)}.log", today(root).name), z.entries().toList().map { it.name })
+            val y = z.getInputStream(z.getEntry("HealthWear_${day.minusDays(1)}.log")).reader().readText()
+            assertTrue(y.startsWith("# Yc-Log-Sdk V1\n")); assertTrue(y.endsWith("# End header\nyesterday\n    | second line\n"))
+            val t = z.getInputStream(z.getEntry(today(root).name)).reader().readText()
+            // 正文里出现的 @record 字样原样保留，只去掉真正的记录头。
+            assertTrue(t.endsWith("# End header\n@record 00000001 in body\n"))
+        }
+        // 原始文件不受 plain 导出影响。
+        assertTrue(today(root).readText().contains(Regex("@record [0-9a-f]{8}\n@record 00000001 in body")))
+    }
+
     @Test fun rejectsTraversalAndInvalidConfiguration() {
         for (path in listOf("../logs", "/tmp/logs", ".", "..", "a/b", "a\\b", "\n")) {
             assertThrows(IllegalArgumentException::class.java) { LogConfig("sdk", path, 7, LogFileSize.MB_20, 1) }

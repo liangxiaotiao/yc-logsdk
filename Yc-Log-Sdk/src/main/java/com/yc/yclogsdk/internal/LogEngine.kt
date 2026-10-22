@@ -59,7 +59,7 @@ internal class LogEngine(private val worker: ExecutorService, private val printe
 
     fun clear() = synchronized(gate) { state?.let { selected -> submit(selected) { it.clearHistory() } }; Unit }
 
-    fun export(cache: () -> File, callback: (LogExportResult) -> Unit) = synchronized(gate) {
+    fun export(cache: () -> File, plain: Boolean = false, callback: (LogExportResult) -> Unit) = synchronized(gate) {
         val selected = state
         val job = Runnable {
             val result = try {
@@ -67,7 +67,7 @@ internal class LogEngine(private val worker: ExecutorService, private val printe
                 // 不把之前失败的已提交日志伪装成完整成功的导出。
                 selected.error?.let { throw it }
                 val manager = selected.manager ?: throw IllegalStateException("Logger initialization failed")
-                LogExportResult(manager.export(cache()), null)
+                LogExportResult(manager.export(cache(), plain), null)
             } catch (error: Throwable) { LogExportResult(null, error) }
             runCatching { callback(result) }
         }
