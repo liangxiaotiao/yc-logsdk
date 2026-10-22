@@ -72,7 +72,8 @@ internal class LogFileManager(
         custom = merged
     }
 
-    fun export(cache: File): File {
+    /** plain=true 时每条记录去掉 `@record xxxxxxxx\n` 头（17 字节），只供阅读；文件头与正文不变。 */
+    fun export(cache: File, plain: Boolean = false): File {
         cleanup(today())
         ensureDay(today())
         val cacheRoot = cache.canonicalFile
@@ -90,7 +91,8 @@ internal class LogFileManager(
                     val snapshot = readSnapshot(file)
                     zip.putNextEntry(ZipEntry(file.name))
                     zip.write(snapshot.header)
-                    snapshot.records.forEach(zip::write)
+                    snapshot.records.forEach { zip.write(it, if (plain) RECORD_OVERHEAD - 1 else 0,
+                        it.size - if (plain) RECORD_OVERHEAD - 1 else 0) }
                     zip.closeEntry()
                 }
                 zip.finish()

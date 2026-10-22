@@ -137,10 +137,23 @@ object Logger {
      * 回调在文件线程执行；不分享、不上传。任意前序文件操作失败时返回 error，避免伪报完整成功。
      */
     @JvmStatic
-    fun export(context: Context, callback: LogExportCallback) {
+    fun export(context: Context, callback: LogExportCallback) = export(context, callback, false)
+
+    /** plain=true：ZIP 内各日志去掉 `@record` 记录头，便于直接阅读；原始格式请用两参数 export。 */
+    @JvmStatic
+    fun export(context: Context, callback: LogExportCallback, plain: Boolean) {
         engine.export({
             (context.applicationContext ?: context).cacheDir
-        }) { callback.onResult(it) }
+        }, plain) { callback.onResult(it) }
+    }
+
+    /**
+     * 追加需要跳过的封装类全名（含其内部类/companion），使文件位置和默认 TAG 指向真正的业务调用处。
+     * 例：Logger.addCallerSkip("com.example.MLog")。可在 init 前调用。
+     */
+    @JvmStatic
+    fun addCallerSkip(vararg classNames: String) = synchronized(CallerResolver) {
+        CallerResolver.skipped = (CallerResolver.skipped + classNames.filter { it.isNotBlank() }).distinct()
     }
 
     private fun write(

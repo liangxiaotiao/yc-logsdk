@@ -1,6 +1,6 @@
 # Maven Central 发布指南
 
-适用于本仓库的 `Yc-Log-Sdk` 模块。当前待发布版本为 **1.0.1**，坐标为 `io.github.liangxiaotiao:yc-log-sdk:1.0.1`。按顺序执行以下步骤；已完成的账号和密钥配置无需重复设置。
+适用于本仓库的 `Yc-Log-Sdk` 模块。当前待发布版本为 **1.0.3**，坐标为 `io.github.liangxiaotiao:yc-log-sdk:1.0.3`。按顺序执行以下步骤；已完成的账号和密钥配置无需重复设置。
 
 ## 1. 准备构建环境
 
@@ -66,7 +66,7 @@ gpg --keyserver hkps://keyserver.ubuntu.com --send-keys YOUR_SIGNING_KEY_ID
 
 ```groovy
 mavenPublishing {
-    coordinates('io.github.liangxiaotiao', 'yc-log-sdk', '1.0.1')
+    coordinates('io.github.liangxiaotiao', 'yc-log-sdk', '1.0.3')
     publishToMavenCentral()
     signAllPublications()
     // 保留仓库现有完整 pom 配置。
@@ -79,7 +79,7 @@ mavenPublishing {
 
 ```bash
 curl --silent --show-error --location --output /dev/null --write-out '%{http_code}\n' \
-  https://repo.maven.apache.org/maven2/io/github/liangxiaotiao/yc-log-sdk/1.0.1/yc-log-sdk-1.0.1.pom
+  https://repo.maven.apache.org/maven2/io/github/liangxiaotiao/yc-log-sdk/1.0.3/yc-log-sdk-1.0.3.pom
 ```
 
 - `404`：再检查 Central Portal 的 [Deployments](https://central.sonatype.com/publishing/deployments) 是否有相同版本待发布；没有则继续。
@@ -104,12 +104,12 @@ bash ./gradlew :app:assembleDebug :app:assembleRelease \
 
 ```bash
 bash ./gradlew :Yc-Log-Sdk:publishToMavenLocal --max-workers=4 --console=plain
-ls "$HOME/.m2/repository/io/github/liangxiaotiao/yc-log-sdk/1.0.1/"
+ls "$HOME/.m2/repository/io/github/liangxiaotiao/yc-log-sdk/1.0.3/"
 unzip -p Yc-Log-Sdk/build/outputs/aar/Yc-Log-Sdk-release.aar \
   META-INF/com/android/build/gradle/aar-metadata.properties
 gpg --verify \
-  "$HOME/.m2/repository/io/github/liangxiaotiao/yc-log-sdk/1.0.1/yc-log-sdk-1.0.1.aar.asc" \
-  "$HOME/.m2/repository/io/github/liangxiaotiao/yc-log-sdk/1.0.1/yc-log-sdk-1.0.1.aar"
+  "$HOME/.m2/repository/io/github/liangxiaotiao/yc-log-sdk/1.0.3/yc-log-sdk-1.0.3.aar.asc" \
+  "$HOME/.m2/repository/io/github/liangxiaotiao/yc-log-sdk/1.0.3/yc-log-sdk-1.0.3.aar"
 ```
 
 确认有 `.aar`、`-sources.jar`、`-javadoc.jar`、`.pom`、`.module` 及各自 `.asc` 签名；AAR 的 `minCompileSdk=35`，没有 API 36.1 要求；GPG 验证成功。本地发布不会上传 Central。正式发布验证不要跳过签名任务。
@@ -129,7 +129,7 @@ git push github main
 
 以上暂存命令针对本次文档变更。以后若调整版本或源码，按实际文件明确添加并提交，再发布对应已提交的版本。不要强制推送。
 
-## 8. 上传并自动发布 1.0.1
+## 8. 上传并自动发布 1.0.3
 
 本机凭据和 GPG 已配置时，执行：
 
@@ -138,7 +138,7 @@ bash ./gradlew :Yc-Log-Sdk:publishAndReleaseToMavenCentral \
   --no-configuration-cache --max-workers=4 --console=plain
 ```
 
-该任务上传产物并请求自动发布；Central 会异步校验，通过后正式发布，**会让版本公开且无法覆盖**。0.34.0 的 Gradle 任务不等待远程校验和仓库同步完成；`BUILD SUCCESSFUL` 后仍需执行步骤 9 确认结果。本次已由用户明确授权。不要重复执行来判断是否成功；应查看日志及 Central Portal 的 deployment 状态。若校验失败，在 Portal 查看具体原因后修正，确认已有 deployment 的状态再重试。
+该任务上传产物并请求自动发布；Central 会异步校验，通过后正式发布，**会让版本公开且无法覆盖**。0.34.0 的 Gradle 任务不等待远程校验和仓库同步完成；`BUILD SUCCESSFUL` 后仍需执行步骤 9 确认结果。发布前需 Jump 本人批准。不要重复执行来判断是否成功；应查看日志及 Central Portal 的 deployment 状态。若校验失败，在 Portal 查看具体原因后修正，确认已有 deployment 的状态再重试。
 
 若只想上传后在 Portal 手动确认，则改为执行下面的任务，并在校验通过后点击 **Publish**：
 
@@ -155,15 +155,15 @@ Central Portal 显示 `PUBLISHED` 后，等待仓库同步；通常还需 10–3
 
 ```bash
 curl --fail --silent --show-error --location \
-  https://repo.maven.apache.org/maven2/io/github/liangxiaotiao/yc-log-sdk/1.0.1/yc-log-sdk-1.0.1.pom
-curl --fail --silent --show-error --location --output /tmp/yc-log-sdk-1.0.1.aar \
-  https://repo.maven.apache.org/maven2/io/github/liangxiaotiao/yc-log-sdk/1.0.1/yc-log-sdk-1.0.1.aar
+  https://repo.maven.apache.org/maven2/io/github/liangxiaotiao/yc-log-sdk/1.0.3/yc-log-sdk-1.0.3.pom
+curl --fail --silent --show-error --location --output /tmp/yc-log-sdk-1.0.3.aar \
+  https://repo.maven.apache.org/maven2/io/github/liangxiaotiao/yc-log-sdk/1.0.3/yc-log-sdk-1.0.3.aar
 ```
 
 下载成功后，在只配置 `google()` / `mavenCentral()` 的宿主中接入：
 
 ```kotlin
-implementation("io.github.liangxiaotiao:yc-log-sdk:1.0.1")
+implementation("io.github.liangxiaotiao:yc-log-sdk:1.0.3")
 ```
 
 最后确认宿主编译通过。若 Portal 已发布而文件暂时 404，等待同步后再检查，不重新上传。

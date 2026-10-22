@@ -50,7 +50,7 @@ class LogEngineTest {
             engine.init(LogConfig(), true) { attempts++; factory(root)(it) }
             engine.log(LogLevel.INFO, "Bluetooth", arrayOf("sdk"), frames)
             val text = contents(export(engine, temp.newFolder()))
-            assertEquals(1, attempts); assertTrue(text.contains("[App]")); assertTrue(text.contains("[Bluetooth]"))
+            assertEquals(1, attempts); assertTrue(text.contains(" App(Test.kt:42)")); assertTrue(text.contains(" Bluetooth(Test.kt:42)"))
             assertEquals(1, File(root, "logs").listFiles()!!.size)
             assertTrue(File(root, "logs").listFiles()!!.single().name.startsWith("HealthWear_"))
         } finally { worker.shutdownNow() }
